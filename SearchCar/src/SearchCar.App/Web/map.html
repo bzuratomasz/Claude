@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="pl">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        html, body, #map { height: 100%; margin: 0; background: #202020; color: #e0e0e0; }
+        .leaflet-container { background: #202020; }
+        .leaflet-tile-pane { filter: invert(100%) hue-rotate(180deg) brightness(95%) contrast(85%) saturate(60%); }
+        .leaflet-control-attribution { background: rgba(32,32,32,.8) !important; color: #bbb; }
+        .leaflet-control-attribution a { color: #8ab4f8; }
+        .leaflet-bar a { background: #2b2b2b; color: #eee; border-color: #444; }
+        #error { display: none; padding: 24px; font: 14px "Segoe UI", sans-serif; }
+        .hint { background: rgba(32,32,32,.85); color: #eee; padding: 4px 8px; border-radius: 4px; font: 12px "Segoe UI", sans-serif; }
+    </style>
+</head>
+<body>
+<div id="error">Nie udało się wczytać mapy (brak internetu?). Nadal możesz wpisać nazwę miejscowości w panelu wyszukiwania.</div>
+<div id="map"></div>
+<script>
+    function post(message) {
+        if (window.chrome && chrome.webview) chrome.webview.postMessage(message);
+    }
+
+    if (typeof L === 'undefined') {
+        document.getElementById('error').style.display = 'block';
+        document.getElementById('map').style.display = 'none';
+    } else {
+        const map = L.map('map', { zoomControl: true }).setView([52.2297, 21.0122], 9);
+        // Standard OpenStreetMap tiles, darkened with a CSS filter (.leaflet-tile-pane) to match the dark theme.
+        L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '&copy; autorzy <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+        }).addTo(map);
+
+        const hint = L.control({ position: 'topright' });
+        hint.onAdd = () => { const d = L.DomUtil.create('div', 'hint'); d.textContent = 'Kliknij mapę lub przeciągnij pinezkę, aby ustawić miejsce wyszukiwania'; return d; };
+        hint.addTo(map);
+
+        const centerMarker = L.marker([52.2297, 21.0122], { draggable: true, title: 'Miejsce wyszukiwania' }).addTo(map);
+        const circle = L.circle([52.2297, 21.0122], { radius: 50000, color: '#42a5f5', weight: 2, fillOpacity: 0.08 }).addTo(map);
+        const listingsLayer = L.layerGroup().addTo(map);
+        const markers = {};
+        let selectedId = null;
+
+        function moveCenter(lat, lon) {
+            centerMarker.setLatLng([lat, lon]);
+            circle.setLatLng([lat, lon]);
+        }
+
+        map.on('click', e => {
+            moveCenter(e.latlng.lat, e.latlng.lng);
+            post({ type: 'center', lat: e.latlng.lat, lon: e.latlng.lng });
+        });
+        centerMarker.on('dragend', () => {
+            const p = centerMarker.getLatLng();
+            circle.setLatLng(p);
+            post({ type: 'center', lat: p.lat, lon: p.lng });
+        });
+
+        window.setCenter = (lat, lon, radiusKm, fit) => {
+            moveCenter(lat, lon);
+            circle.setRadius(radiusKm * 1000);
+            if (fit) map.fitBounds(circle.getBounds(), { padding: [20, 20] });
+        };
+
+        window.setRadius = radiusKm => circle.setRadius(radiusKm * 1000);
+
+        window.fitSearchArea = () => map.fitBounds(circle.getBounds(), { padding: [20, 20] });
+
+        window.upsertListing = it => {
+            if (it.lat === null || it.lon === null) return; // position not known yet
+            const existing = markers[it.id];
+            if (existing) {
+                existing.setLatLng([it.lat, it.lon]);
+                existing.setStyle({ fillColor: it.color });
+                existing.setTooltipContent(it.title);
+                return;
+            }
+            const m = L.circleMarker([it.lat, it.lon], {
+                radius: 7, color: '#202020', weight: 1.5, fillColor: it.color, fillOpacity: 0.95
+            });
+            m.bindTooltip(it.title);
+            m.on('click', ev => { L.DomEvent.stopPropagation(ev); post({ type: 'select', id: it.id }); });
+            m.addTo(listingsLayer);
+            markers[it.id] = m;
+        };
+
+        window.removeListing = id => {
+            const m = markers[id];
+            if (!m) return;
+            listingsLayer.removeLayer(m);
+            delete markers[id];
+            if (selectedId === id) selectedId = null;
+        };
+
+        window.setListings = items => {
+            listingsLayer.clearLayers();
+            for (const key of Object.keys(markers)) delete markers[key];
+            selectedId = null;
+            for (const it of items) window.upsertListing(it);
+        };
+
+        window.selectListing = id => {
+            if (selectedId && markers[selectedId]) markers[selectedId].setStyle({ radius: 7, weight: 1.5, color: '#202020' });
+            selectedId = id;
+            const m = markers[id];
+            if (!m) return;
+            m.setStyle({ radius: 11, weight: 3, color: '#ffffff' });
+            m.bringToFront();
+            m.openTooltip();
+            if (!map.getBounds().contains(m.getLatLng())) map.panTo(m.getLatLng());
+        };
+    }
+
+    post({ type: 'ready', mapAvailable: typeof L !== 'undefined' });
+</script>
+</body>
+</html>

@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="SearchCar.Core.Tests" />
+    <EmbeddedResource Include="Data\otomoto-catalog.json" LogicalName="SearchCar.Core.Data.otomoto-catalog.json" />
+  </ItemGroup>
+</Project>
