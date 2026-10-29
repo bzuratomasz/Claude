@@ -1,7 +1,26 @@
+# Unreal Engine
+Binaries/
+Intermediate/
+Saved/
+DerivedDataCache/
+Build/*
+!Build/Windows/
+Build/Windows/*
+!Build/Windows/Application.ico
+Plugins/*/Binaries/
+Plugins/*/Intermediate/
+*.sln
+*.VC.db
+*.opensdf
+*.sdf
+.vs/
+.vscode/
+.idea/
+
+# Quiz exporter / packaging output
 bin/
 obj/
 out/
-.vs/
 .wix/
 *.user
 *.suo

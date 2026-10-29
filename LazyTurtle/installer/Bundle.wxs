@@ -1,0 +1,37 @@
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"
+     xmlns:bal="http://wixtoolset.org/schemas/v4/wxs/bal"
+     xmlns:util="http://wixtoolset.org/schemas/v4/wxs/util">
+
+  <!--
+    LazyTurtle-<version>-Setup.exe: installs the Unreal Engine prerequisites (Visual C++ runtime, DirectX
+    components) when they are missing, then the game MSI. One file to give to parents and schools.
+  -->
+  <Bundle Name="Lazy Turtle"
+          Manufacturer="LazyTurtle"
+          Version="$(var.Version)"
+          UpgradeCode="{4B1A125D-A578-40D6-BFF4-39CF12BD24BF}"
+          IconSourceFile="$(var.IconFile)">
+
+    <BootstrapperApplication>
+      <bal:WixStandardBootstrapperApplication LicenseFile="$(var.LicenseFile)" Theme="rtfLicense" />
+    </BootstrapperApplication>
+
+    <!-- The Visual C++ 2015-2022 x64 runtime registers itself here; it is the main thing Unreal games need. -->
+    <util:RegistrySearch Id="VCRedistX64" Root="HKLM" Key="SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\x64"
+                         Value="Installed" Variable="VCRedistX64Installed" Bitness="always64" Result="value" />
+
+    <Chain>
+      <ExePackage Id="UEPrereqs"
+                  DisplayName="Unreal Engine prerequisites"
+                  SourceFile="$(var.PrereqFile)"
+                  DetectCondition="VCRedistX64Installed = 1"
+                  InstallArguments="/quiet /norestart"
+                  PerMachine="yes"
+                  Permanent="yes"
+                  Vital="yes">
+        <ExitCode Value="3010" Behavior="scheduleReboot" />
+      </ExePackage>
+      <MsiPackage Id="Game" SourceFile="$(var.MsiFile)" />
+    </Chain>
+  </Bundle>
+</Wix>

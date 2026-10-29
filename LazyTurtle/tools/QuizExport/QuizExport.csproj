@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <RootNamespace>LazyTurtle</RootNamespace>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <!-- The original generators predate nullable/modern analyzers; keep the build quiet. -->
+    <NoWarn>$(NoWarn);CS0649;CS8632</NoWarn>
+  </PropertyGroup>
+
+</Project>
