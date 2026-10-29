@@ -25,11 +25,13 @@
                   DisplayName="Unreal Engine prerequisites"
                   SourceFile="$(var.PrereqFile)"
                   DetectCondition="VCRedistX64Installed = 1"
-                  InstallArguments="/quiet /norestart"
+                  InstallArguments="/install /quiet /norestart"
                   PerMachine="yes"
                   Permanent="yes"
                   Vital="yes">
         <ExitCode Value="3010" Behavior="scheduleReboot" />
+        <!-- vc_redist: a newer runtime is already installed -->
+        <ExitCode Value="1638" Behavior="success" />
       </ExePackage>
       <MsiPackage Id="Game" SourceFile="$(var.MsiFile)" />
     </Chain>

@@ -43,11 +43,15 @@ try {
     if (-not $exe) { throw 'No packaged game in out\package. Run without -SkipBuild first.' }
     $stageDir = $exe.DirectoryName
 
-    $prereq = Join-Path $stageDir 'Engine\Extras\Redist\en-us\UEPrereqSetup_x64.exe'
-    if (-not (Test-Path $prereq) -and $EngineDir) {
-        $prereq = Join-Path $EngineDir 'Engine\Extras\Redist\en-us\UEPrereqSetup_x64.exe'
+    # UE 5.8 stages the Visual C++ x64 runtime installer; older engines shipped UEPrereqSetup_x64.exe
+    $prereq = $null
+    foreach ($dir in @($stageDir, $EngineDir) | Where-Object { $_ }) {
+        foreach ($name in 'vc_redist.x64.exe', 'UEPrereqSetup_x64.exe') {
+            $candidate = Join-Path $dir "Engine\Extras\Redist\en-us\$name"
+            if (-not $prereq -and (Test-Path $candidate)) { $prereq = $candidate }
+        }
     }
-    if (-not (Test-Path $prereq)) { throw "UEPrereqSetup_x64.exe not found (looked in the packaged game and -EngineDir)." }
+    if (-not $prereq) { throw "vc_redist.x64.exe / UEPrereqSetup_x64.exe not found (looked in the packaged game and -EngineDir)." }
 
     Write-Host '==> Restoring WiX toolset' -ForegroundColor Cyan
     dotnet tool restore

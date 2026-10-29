@@ -7,11 +7,9 @@
 #if PLATFORM_WINDOWS
 #include "Windows/WindowsHWrapper.h"
 #include "Windows/AllowWindowsPlatformTypes.h"
-#include "Windows/PreWindowsApi.h"
 THIRD_PARTY_INCLUDES_START
 #include <sapi.h>
 THIRD_PARTY_INCLUDES_END
-#include "Windows/PostWindowsApi.h"
 #include "Windows/HideWindowsPlatformTypes.h"
 
 namespace LTSpeechDetail
