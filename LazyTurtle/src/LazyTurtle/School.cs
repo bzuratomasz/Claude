@@ -47,50 +47,50 @@ namespace LazyTurtle
             new FloorTheme
             {
                 NamePl = "Piętro Arboretum", NameEn = "Arboretum floor",
-                Paint = Art.C(250, 238, 190), Accent = Art.C(90, 170, 90), Wood = Art.C(165, 115, 70),
-                Floor1 = Art.C(235, 228, 205), Floor2 = Art.C(130, 185, 115), Fog = Art.C(70, 62, 55),
+                Paint = Art.C(255, 242, 180), Accent = Art.C(75, 185, 80), Wood = Art.C(195, 135, 78),
+                Floor1 = Art.C(252, 246, 222), Floor2 = Art.C(135, 210, 105), Fog = Art.C(170, 165, 125),
             },
             new FloorTheme
             {
                 NamePl = "Piętro Jeziora Kórnickiego", NameEn = "Lake Kórnik floor",
-                Paint = Art.C(205, 228, 250), Accent = Art.C(70, 125, 210), Wood = Art.C(150, 105, 70),
-                Floor1 = Art.C(230, 232, 240), Floor2 = Art.C(110, 150, 215), Fog = Art.C(55, 60, 75),
+                Paint = Art.C(200, 232, 255), Accent = Art.C(45, 140, 235), Wood = Art.C(180, 125, 78),
+                Floor1 = Art.C(242, 248, 255), Floor2 = Art.C(100, 175, 245), Fog = Art.C(130, 150, 175),
             },
             new FloorTheme
             {
                 NamePl = "Piętro Zamkowe", NameEn = "Castle floor",
-                Paint = Art.C(255, 220, 185), Accent = Art.C(230, 125, 60), Wood = Art.C(160, 100, 60),
-                Floor1 = Art.C(240, 230, 215), Floor2 = Art.C(225, 150, 95), Fog = Art.C(75, 58, 48),
+                Paint = Art.C(255, 222, 178), Accent = Art.C(245, 128, 45), Wood = Art.C(188, 118, 66),
+                Floor1 = Art.C(254, 242, 222), Floor2 = Art.C(248, 165, 90), Fog = Art.C(170, 140, 112),
             },
             new FloorTheme
             {
                 NamePl = "Piętro Biblioteki Kórnickiej", NameEn = "Kórnik Library floor",
-                Paint = Art.C(228, 210, 245), Accent = Art.C(140, 95, 200), Wood = Art.C(140, 95, 75),
-                Floor1 = Art.C(235, 230, 240), Floor2 = Art.C(160, 125, 210), Fog = Art.C(62, 52, 72),
+                Paint = Art.C(234, 216, 255), Accent = Art.C(150, 95, 230), Wood = Art.C(170, 115, 82),
+                Floor1 = Art.C(246, 240, 255), Floor2 = Art.C(180, 145, 240), Fog = Art.C(150, 135, 170),
             },
             new FloorTheme
             {
                 NamePl = "Piętro Białej Damy", NameEn = "White Lady floor",
-                Paint = Art.C(236, 241, 249), Accent = Art.C(120, 150, 200), Wood = Art.C(150, 140, 135),
-                Floor1 = Art.C(242, 244, 248), Floor2 = Art.C(172, 188, 218), Fog = Art.C(58, 62, 74),
+                Paint = Art.C(230, 244, 255), Accent = Art.C(95, 160, 235), Wood = Art.C(182, 165, 150),
+                Floor1 = Art.C(250, 252, 255), Floor2 = Art.C(170, 205, 245), Fog = Art.C(145, 155, 178),
             },
             new FloorTheme
             {
                 NamePl = "Piętro Działyńskich", NameEn = "Działyński floor",
-                Paint = Art.C(250, 228, 200), Accent = Art.C(175, 40, 45), Wood = Art.C(130, 72, 45),
-                Floor1 = Art.C(242, 228, 202), Floor2 = Art.C(205, 155, 60), Fog = Art.C(70, 45, 40),
+                Paint = Art.C(255, 234, 196), Accent = Art.C(215, 55, 60), Wood = Art.C(170, 100, 58),
+                Floor1 = Art.C(254, 242, 214), Floor2 = Art.C(245, 185, 65), Fog = Art.C(170, 135, 108),
             },
             new FloorTheme
             {
                 NamePl = "Piętro Teofili", NameEn = "Teofila floor",
-                Paint = Art.C(252, 226, 230), Accent = Art.C(210, 100, 130), Wood = Art.C(165, 112, 92),
-                Floor1 = Art.C(250, 240, 226), Floor2 = Art.C(232, 168, 178), Fog = Art.C(72, 55, 60),
+                Paint = Art.C(255, 226, 238), Accent = Art.C(235, 90, 150), Wood = Art.C(192, 128, 100),
+                Floor1 = Art.C(255, 246, 238), Floor2 = Art.C(248, 165, 198), Fog = Art.C(175, 138, 150),
             },
             new FloorTheme
             {
                 NamePl = "Piętro Ratusza w Bninie", NameEn = "Bnin Town Hall floor",
-                Paint = Art.C(212, 238, 232), Accent = Art.C(40, 140, 135), Wood = Art.C(170, 95, 60),
-                Floor1 = Art.C(236, 233, 222), Floor2 = Art.C(200, 112, 78), Fog = Art.C(45, 64, 64),
+                Paint = Art.C(205, 246, 232), Accent = Art.C(25, 168, 150), Wood = Art.C(198, 115, 66),
+                Floor1 = Art.C(246, 244, 230), Floor2 = Art.C(240, 130, 88), Fog = Art.C(120, 158, 148),
             },
         };
 
