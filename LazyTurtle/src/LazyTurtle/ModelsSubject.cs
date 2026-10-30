@@ -36,8 +36,29 @@ namespace LazyTurtle
             Action<Model> build;
             if (!artifacts.TryGetValue(key, out build)) return false;
             build(m);
+            Vivid(m.Plain);
             return true;
         }
+
+        /// <summary>
+        /// Makes the vertex colours of a part brighter and more saturated, like toy plastic: pushes every colour away
+        /// from its grey level and lifts the dark ones a little (white, black and greys stay neutral).
+        /// </summary>
+        static void Vivid(MeshBuilder b)
+        {
+            const float Sat = 1.3f, Lift = 0.05f;
+            var d = b.Data;
+            for (int i = 8; i + 2 < d.Count; i += MeshBuilder.Stride)
+            {
+                float r = d[i], g = d[i + 1], bl = d[i + 2];
+                float l = 0.299f * r + 0.587f * g + 0.114f * bl;
+                d[i] = Clamp01(Lift + (1 - Lift) * (l + (r - l) * Sat));
+                d[i + 1] = Clamp01(Lift + (1 - Lift) * (l + (g - l) * Sat));
+                d[i + 2] = Clamp01(Lift + (1 - Lift) * (l + (bl - l) * Sat));
+            }
+        }
+
+        static float Clamp01(float v) => v < 0 ? 0 : v > 1 ? 1 : v;
 
         // ================================================================== shared helpers
 
@@ -334,10 +355,10 @@ namespace LazyTurtle
             var head = P(0.04, 0.88, 0);
             c.Ellipsoid(head.X, head.Y, head.Z, 0.19, 0.18, 0.19, 14, 8);
             Eyes(c, head, 0.19, 0.38, 0.12, 0.045);
-            Glasses(c, head, 0.19, 0.38, 0.12, 0.066, 0.009, 0.045, C(60, 45, 30));
+            Glasses(c, head, 0.19, 0.38, 0.12, 0.066, 0.009, 0.045, C(150, 75, 40));
             Brows(c, head, 0.19, 0.58);
-            Cheeks(c, head, 0.19, 0.78, -0.15, 0.04);
-            Smile(c, head, 0.19, -0.3, 0.3, 0.011, C(70, 40, 30));
+            Cheeks(c, head, 0.19, 0.78, -0.15, 0.044);
+            Smile(c, head, 0.19, -0.3, 0.34, 0.012, C(75, 35, 30), 0.11);
             if (lady && o.Hair)
             {
                 c.Col(C(205, 205, 212)); c.Ellipsoid(0.03, 0.95, 0, 0.198, 0.16, 0.2, 16, 3, 0.3, 1);
