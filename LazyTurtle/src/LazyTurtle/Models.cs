@@ -24,11 +24,11 @@ namespace LazyTurtle
     {
         const double PI = Math.PI;
 
-        static readonly Color Skin = C(125, 190, 95), SkinDark = C(75, 140, 60);
-        static readonly Color OldSkin = C(130, 180, 105), OldSkinDark = C(85, 135, 70);
-        static readonly Color Cream = C(240, 225, 170), RimGold = C(235, 210, 120);
-        static readonly Color Gold = C(255, 205, 60), GoldDark = C(205, 150, 30);
-        static readonly Color White = C(250, 250, 250), Pupil = C(35, 28, 30), Pink = C(255, 150, 165);
+        static readonly Color Skin = C(120, 205, 90), SkinDark = C(70, 155, 60);
+        static readonly Color OldSkin = C(140, 192, 112), OldSkinDark = C(88, 142, 72);
+        static readonly Color Cream = C(250, 232, 170), RimGold = C(245, 215, 110);
+        static readonly Color Gold = C(255, 210, 50), GoldDark = C(215, 150, 20);
+        static readonly Color White = C(250, 250, 250), Pupil = C(32, 26, 40), Pink = C(255, 130, 160);
         static readonly Color Metal = C(125, 128, 138), Wood = C(150, 100, 55);
 
         /// <summary>Returns the parts of a model, or null for an unknown key. Deterministic (may be rebuilt after a language change).</summary>
@@ -260,14 +260,17 @@ namespace LazyTurtle
 
         // ================================================================== face helpers
 
+        /// <summary>Cartoon eye: white ball, big dark pupil and two white catchlights (a big one up, a tiny one down) that make it sparkle.</summary>
         static void Eye(MeshBuilder b, V3 p, double r, V3 n)
         {
-            b.Col(White); Sph(b, p, r, 8, 4);
+            b.Col(White); Sph(b, p, r, 10, 5);
             var f = (n + new V3(1.2, 0, 0)).Normalized();
-            var pc = p + f * (r * 0.6);
-            b.Col(Pupil); Sph(b, pc, r * 0.52, 6, 4);
-            var hl = pc + (f + new V3(0, 0.8, 0)).Normalized() * (r * 0.44);
-            b.Col(White); Sph(b, hl, r * 0.17, 4, 2);
+            var pc = p + f * (r * 0.56);
+            b.Col(Pupil); Sph(b, pc, r * 0.58, 8, 4);
+            var side = V3.Cross(new V3(0, 1, 0), f).Normalized();
+            var hl = pc + (f + new V3(0, 0.75, 0) + side * 0.45).Normalized() * (r * 0.5);
+            b.Col(White); Sph(b, hl, r * 0.24, 6, 3);
+            Sph(b, pc + (f - new V3(0, 0.6, 0) - side * 0.45).Normalized() * (r * 0.56), r * 0.1, 4, 2);
         }
 
         static void Eyes(MeshBuilder b, V3 head, double R, double az, double el, double r)
@@ -296,6 +299,17 @@ namespace LazyTurtle
                 Cone(b, outer[k], On(head, s * 1.45, el + 0.05, R * 0.97), tube * 0.8, tube * 0.8, 4, false);
             }
             Cone(b, inner[0], inner[1], tube * 0.9, tube * 0.9, 4, false);
+            // a white shine streak across the upper outer part of each lens
+            b.Col(White);
+            for (int s = -1; s <= 1; s += 2)
+            {
+                double a = s * az;
+                var c = On(head, a, el, R + eyeR * 0.85) + Dir(a, el) * (tube * 0.5);
+                var side = P(-Math.Sin(a), 0, Math.Cos(a)) * s;
+                b.Push(Mul(T(c + side * (rim * 0.42) + P(0, rim * 0.42, 0)), M4.RotY(-a), M4.RotX(-s * 0.75)));
+                b.Ellipsoid(0, 0, 0, tube * 0.5, rim * 0.3, rim * 0.09, 5, 3);
+                b.Pop();
+            }
         }
 
         /// <summary>White bushy eyebrows: three fluffy puffs per side.</summary>
@@ -311,22 +325,29 @@ namespace LazyTurtle
                 }
         }
 
-        static void Smile(MeshBuilder b, V3 head, double R, double el, double w, double tube, Color col)
+        /// <summary>A smile curve on the head; depth = how far (radians) the middle dips, with little round dimples at the ends.</summary>
+        static void Smile(MeshBuilder b, V3 head, double R, double el, double w, double tube, Color col, double depth = 0.08)
         {
             b.Col(col);
-            var pts = new V3[5];
-            for (int k = 0; k < 5; k++)
+            var pts = new V3[7];
+            for (int k = 0; k < 7; k++)
             {
-                double az = -w + 2 * w * k / 4;
-                pts[k] = On(head, az, el - 0.08 * (1 - az * az / (w * w)), R + 0.002);
+                double az = -w + 2 * w * k / 6;
+                pts[k] = On(head, az, el - depth * (1 - az * az / (w * w)), R + 0.002);
             }
             Tube(b, pts, tube, 5);
+            Sph(b, pts[0], tube * 1.25, 5, 3);
+            Sph(b, pts[6], tube * 1.25, 5, 3);
         }
 
         static void Cheeks(MeshBuilder b, V3 head, double R, double az, double el, double cr)
         {
-            b.Col(Pink);
-            for (int s = -1; s <= 1; s += 2) Sph(b, On(head, s * az, el, R - cr * 0.55), cr, 6, 3);
+            for (int s = -1; s <= 1; s += 2)
+            {
+                var p = On(head, s * az, el, R - cr * 0.55);
+                b.Col(Pink); Sph(b, p, cr, 8, 4);
+                b.Col(C(255, 190, 205)); Sph(b, On(head, s * (az - 0.06), el + 0.04, R + cr * 0.22), cr * 0.3, 4, 2);   // soft shine
+            }
         }
 
         /// <summary>Hex-plated shell on the back of an upright turtle, with a golden rim.</summary>
@@ -358,21 +379,33 @@ namespace LazyTurtle
             c.Ellipsoid(-0.32, 0.17, 0, 0.06, 0.03, 0.035, 8, 4);
             c.Ellipsoid(0.27, 0.22, 0, 0.09, 0.065, 0.07, 8, 4);
             var head = P(0.36, 0.27, 0);
-            c.Ellipsoid(head.X, head.Y, head.Z, 0.12, 0.115, 0.12, 16, 9);
-            Eyes(c, head, 0.12, 0.42, -0.06, 0.036);
-            Cheeks(c, head, 0.12, 0.85, -0.2, 0.026);
-            Smile(c, head, 0.12, -0.38, 0.3, 0.007, C(60, 40, 30));
-            // red baseball cap
-            c.Col(C(225, 50, 45)); c.Ellipsoid(0.355, 0.30, 0, 0.125, 0.10, 0.125, 16, 5, 0, 1);
-            c.Col(C(190, 35, 35)); c.Ellipsoid(0.465, 0.305, 0, 0.09, 0.012, 0.10, 12, 3);
+            c.Ellipsoid(head.X, head.Y, head.Z, 0.123, 0.12, 0.123, 18, 10);
+            Eyes(c, head, 0.123, 0.4, -0.04, 0.042);
+            Cheeks(c, head, 0.123, 0.85, -0.22, 0.028);
+            Smile(c, head, 0.123, -0.36, 0.32, 0.008, C(70, 35, 30), 0.1);
+            // red baseball cap with a white button, a white front patch and the adjuster strap at the back
+            c.Col(C(235, 45, 50)); c.Ellipsoid(0.355, 0.30, 0, 0.128, 0.104, 0.128, 18, 5, 0, 1);
+            c.Col(C(200, 30, 40)); c.Ellipsoid(0.465, 0.305, 0, 0.09, 0.012, 0.10, 12, 3);
             c.Col(White);
-            c.Sphere(0.355, 0.40, 0, 0.018, 6, 3);
+            c.Sphere(0.355, 0.404, 0, 0.02, 6, 3);
             c.Ellipsoid(0.462, 0.345, 0, 0.012, 0.025, 0.04, 6, 3);
-            // backpack lying on the back of the shell
+            c.Col(Gold); StarX(c, 0.345, 0, 0.02, 0.008, 0.466, 0.476);
+            c.Col(White);
+            c.Push(Mul(T(0.232, 0.318, 0), M4.RotZ(PI / 2 - 0.25)));
+            c.Ellipsoid(0, 0, 0, 0.028, 0.008, 0.035, 8, 3);
+            c.Pop();
+            // backpack lying on the back of the shell: a front pocket, a blue star patch and a little charm
             m.Push(Mul(T(-0.17, 0.43, 0), M4.RotZ(0.5)));
-            c.Col(C(250, 200, 50)); SoftBox(c, 0, 0, 0, 0.10, 0.045, 0.11, 0.35, 12, 6);
-            c.Col(C(240, 160, 30)); SoftBox(c, -0.01, 0.042, 0, 0.065, 0.02, 0.075, 0.35, 8, 4);
-            c.Col(C(230, 55, 55)); c.Sphere(0, 0.064, 0, 0.013, 6, 3);
+            c.Col(C(255, 210, 40)); SoftBox(c, 0, 0, 0, 0.10, 0.045, 0.11, 0.35, 12, 6);
+            c.Col(C(255, 150, 30)); SoftBox(c, -0.01, 0.042, 0, 0.065, 0.02, 0.075, 0.35, 8, 4);
+            c.Col(C(235, 50, 60)); c.Sphere(0.04, 0.062, 0, 0.013, 6, 3);
+            m.Push(M4.RotZ(PI / 2));   // star facing up out of the pocket flap
+            c.Col(C(70, 170, 255)); StarX(c, 0.02, 0, 0.03, 0.013, 0.058, 0.068);
+            m.Pop();
+            c.Col(C(255, 255, 255));
+            for (int s = -1; s <= 1; s += 2) c.Box(-0.065, 0.047, s * 0.08, 0.04, 0.004, 0.012);   // reflective strips
+            c.Col(C(200, 200, 210)); c.Torus(-0.1, 0.0, 0.06, 0.012, 0.003, 8, 3);
+            c.Col(C(255, 120, 170)); c.Sphere(-0.112, -0.022, 0.06, 0.016, 8, 4);
             m.Pop();
             // straps over the shell to the shoulders
             c.Col(C(200, 130, 20));
@@ -411,6 +444,13 @@ namespace LazyTurtle
             c.Sphere(0.16, 0.63, 0.30, 0.055, 8, 4);
             c.Col(C(130, 85, 40)); c.Rod(P(0.16, 0, 0.30), P(0.16, 1.42, 0.30), 0.022, 8);
             c.Col(Gold); StarX(c, 1.52, 0.30, 0.11, 0.045, 0.14, 0.18);
+            // a soft glow ring and little twinkles around the staff star
+            c.Col(C(255, 245, 170));
+            c.Torus(0.16, 1.52, 0.30, 0.14, 0.008, 20, 4);
+            c.Col(C(255, 250, 215));
+            StarX(c, 1.70, 0.20, 0.03, 0.012, 0.155, 0.165);
+            StarX(c, 1.40, 0.45, 0.025, 0.01, 0.155, 0.165);
+            StarX(c, 1.64, 0.46, 0.02, 0.008, 0.155, 0.165);
             // head
             var head = P(0.05, 1.10, 0);
             c.Col(skin); c.Ellipsoid(head.X, head.Y, head.Z, 0.19, 0.18, 0.19, 14, 8);
@@ -462,8 +502,8 @@ namespace LazyTurtle
             c.Col(C(200, 140, 20)); StarX(c, 0.45, 0, 0.04, 0.017, mr + 0.02, mr + 0.03);
         }
 
-        static readonly Color[] KidShirts = { C(240, 90, 90), C(80, 150, 240), C(250, 180, 50) };
-        static readonly Color[] KidPacks = { C(250, 200, 50), C(240, 110, 60), C(90, 170, 230) };
+        static readonly Color[] KidShirts = { C(245, 70, 85), C(60, 145, 250), C(255, 185, 30) };
+        static readonly Color[] KidPacks = { C(255, 210, 40), C(255, 110, 50), C(80, 200, 220) };
 
         /// <summary>Small classmate turtle ≈0.6 tall with a shirt and a backpack.</summary>
         static void Kid(Model m, int v)
@@ -476,7 +516,9 @@ namespace LazyTurtle
             }
             BackShell(m, P(-0.09, 0.26, 0), 0.19, 0.08, 0.17, C(255, 255, 255));
             c.Col(KidPacks[v]); SoftBox(c, -0.20, 0.27, 0, 0.045, 0.09, 0.10, 0.35, 10, 6);
+            c.Col(Shade(KidPacks[v], -30)); SoftBox(c, -0.245, 0.24, 0, 0.012, 0.05, 0.065, 0.35, 6, 4);   // pocket
             c.Col(KidShirts[v]); c.Ellipsoid(0, 0.25, 0, 0.12, 0.16, 0.14, 12, 7);
+            KidShirtPattern(c, v);
             // backpack straps following the shirt
             c.Col(C(120, 70, 20));
             for (int s = -1; s <= 1; s += 2)
@@ -492,10 +534,68 @@ namespace LazyTurtle
             c.Col(Skin);
             for (int s = -1; s <= 1; s += 2) Limb(c, P(0, 0.35, s * 0.13), P(0.04, 0.18, s * 0.16), 0.04, 6, 4);
             var head = P(0.03, 0.46, 0);
-            c.Ellipsoid(head.X, head.Y, head.Z, 0.145, 0.135, 0.145, 14, 8);
-            Eyes(c, head, 0.145, 0.36, 0.1, 0.045);
-            Cheeks(c, head, 0.145, 0.85, -0.18, 0.03);
-            Smile(c, head, 0.145, -0.3, 0.35, 0.009, C(60, 40, 30));
+            const double R = 0.15;
+            c.Ellipsoid(head.X, head.Y, head.Z, R, 0.142, R, 16, 9);
+            Eyes(c, head, R, 0.34, 0.1, 0.052);
+            Cheeks(c, head, R, 0.82, -0.2, 0.032);
+            Smile(c, head, R, -0.28, 0.34, 0.01, C(70, 35, 30), 0.11);
+            KidHat(c, head, R, v);
+        }
+
+        static readonly Color[] KidShirtTrim = { C(255, 255, 255), C(255, 255, 255), C(240, 70, 120) };
+
+        /// <summary>Shirt decorations: white polka dots (0), white stripes (1) or a pink star on the chest (2).</summary>
+        static void KidShirtPattern(MeshBuilder c, int v)
+        {
+            c.Col(KidShirtTrim[v]);
+            if (v == 0)
+            {
+                for (int i = 0; i < 3; i++)
+                    for (int j = -2; j <= 2; j++)
+                    {
+                        double th = -0.55 + 0.45 * i + (j % 2 == 0 ? 0 : 0.2), ph = j * 0.42;
+                        var p = P(0.12 * Math.Cos(th) * Math.Cos(ph), 0.25 + 0.16 * Math.Sin(th), 0.14 * Math.Cos(th) * Math.Sin(ph));
+                        Sph(c, p, 0.016, 5, 3);
+                    }
+            }
+            else if (v == 1)
+            {
+                foreach (double y0 in new[] { -0.35, 0.05 })
+                    c.Ellipsoid(0, 0.25, 0, 0.123, 0.163, 0.143, 12, 2, y0, y0 + 0.17);
+            }
+            else StarX(c, 0.27, 0, 0.05, 0.022, 0.105, 0.128);
+        }
+
+        /// <summary>A different hat for every classmate: a pink bow (0), a cap worn backwards (1), a propeller beanie (2).</summary>
+        static void KidHat(MeshBuilder c, V3 head, double R, int v)
+        {
+            if (v == 0)
+            {
+                var b = On(head, -0.5, 0.75, R);
+                c.Col(C(255, 105, 170));
+                for (int s = -1; s <= 1; s += 2)
+                {
+                    c.Push(Mul(T(b + P(0, 0, s * 0.04)), M4.RotX(s * 0.5)));
+                    c.Ellipsoid(0, 0, 0, 0.022, 0.035, 0.045, 8, 4);
+                    c.Pop();
+                }
+                c.Col(C(255, 200, 225)); Sph(c, b, 0.02, 6, 3);
+            }
+            else if (v == 1)
+            {
+                c.Col(C(40, 110, 230)); c.Ellipsoid(head.X, head.Y + 0.06, head.Z, 0.143, 0.095, 0.143, 16, 5, 0, 1);
+                c.Col(C(30, 85, 200)); c.Ellipsoid(head.X - 0.17, head.Y + 0.062, head.Z, 0.08, 0.011, 0.095, 12, 3);
+                c.Col(White); c.Sphere(head.X, head.Y + 0.155, head.Z, 0.018, 6, 3);
+            }
+            else
+            {
+                c.Col(C(240, 60, 70)); c.Ellipsoid(head.X, head.Y + 0.06, head.Z, 0.143, 0.095, 0.143, 16, 5, 0, 1);
+                c.Col(C(255, 210, 40)); c.Ellipsoid(head.X, head.Y + 0.06, head.Z, 0.146, 0.097, 0.146, 16, 2, 0, 0.3);
+                c.Col(C(230, 230, 235)); c.Rod(P(head.X, head.Y + 0.15, head.Z), P(head.X, head.Y + 0.2, head.Z), 0.008, 6);
+                c.Col(C(70, 190, 90)); c.Ellipsoid(head.X + 0.06, head.Y + 0.2, head.Z + 0.01, 0.06, 0.006, 0.018, 8, 3);
+                c.Col(C(60, 140, 240)); c.Ellipsoid(head.X - 0.06, head.Y + 0.2, head.Z - 0.01, 0.06, 0.006, 0.018, 8, 3);
+                c.Col(C(255, 210, 40)); c.Sphere(head.X, head.Y + 0.203, head.Z, 0.013, 6, 3);
+            }
         }
 
         // ================================================================== furniture
@@ -543,9 +643,9 @@ namespace LazyTurtle
                 BackShell(m, P(-0.31, 0.50, 0), 0.15, 0.06, 0.13, C(255, 255, 255));
                 Seated(c, C(240, 120, 170), Skin, SkinDark);
                 c.Col(Skin); c.Ellipsoid(head.X, head.Y, head.Z, 0.115, 0.11, 0.115, 14, 8);
-                Eyes(c, head, 0.115, 0.38, 0.1, 0.036);
-                Cheeks(c, head, 0.115, 0.85, -0.18, 0.025);
-                Smile(c, head, 0.115, -0.3, 0.32, 0.007, C(60, 40, 30));
+                Eyes(c, head, 0.115, 0.36, 0.1, 0.041);
+                Cheeks(c, head, 0.115, 0.83, -0.2, 0.026);
+                Smile(c, head, 0.115, -0.28, 0.33, 0.008, C(70, 35, 30), 0.11);
             }
             else if (v == 2)
             {
@@ -650,27 +750,41 @@ namespace LazyTurtle
             }
         }
 
-        /// <summary>Wrapped present ≈0.25 cube with gold ribbons and a bow; origin at its bottom centre.</summary>
+        /// <summary>Wrapped present ≈0.25 cube in polka-dot paper with shiny gold ribbons, a big bow and ribbon tails; origin at its bottom centre.</summary>
         static void Gift(Model m)
         {
+            var paper = m.Get(GiftTex());
             var c = m.Plain;
-            c.Col(C(225, 45, 55)); c.Box(0, 0.11, 0, 0.24, 0.22, 0.24);
-            c.Col(C(240, 65, 70)); c.Box(0, 0.235, 0, 0.26, 0.05, 0.26);
+            paper.Col(White); paper.Box(0, 0.11, 0, 0.24, 0.22, 0.24);
+            c.Col(C(255, 70, 110)); c.Box(0, 0.235, 0, 0.26, 0.05, 0.26);
+            paper.Col(C(255, 235, 240));
+            paper.Quad(P(-0.13, 0.2605, 0.13), P(0.13, 0.2605, 0.13), P(0.13, 0.2605, -0.13), P(-0.13, 0.2605, -0.13));
             c.Col(Gold);
             c.Box(0, 0.11, 0, 0.245, 0.22, 0.05);
             c.Box(0, 0.11, 0, 0.05, 0.22, 0.245);
             c.Box(0, 0.235, 0, 0.265, 0.052, 0.05);
             c.Box(0, 0.235, 0, 0.05, 0.052, 0.265);
+            // thin light edges make the ribbons look satin
+            c.Col(C(255, 245, 170));
             for (int s = -1; s <= 1; s += 2)
             {
-                c.Push(Mul(T(0, 0.275, s * 0.045), M4.RotX(s * 0.6)));
-                c.Ellipsoid(0, 0, 0, 0.03, 0.035, 0.05, 8, 5);
-                c.Pop();
-                c.Push(Mul(T(s * 0.045, 0.275, 0), M4.RotZ(-s * 0.6)));
-                c.Ellipsoid(0, 0, 0, 0.05, 0.035, 0.03, 8, 5);
-                c.Pop();
+                c.Box(0, 0.11, s * 0.02, 0.247, 0.22, 0.006);
+                c.Box(s * 0.02, 0.11, 0, 0.006, 0.22, 0.247);
             }
-            c.Col(GoldDark); c.Sphere(0, 0.27, 0, 0.024, 8, 4);
+            c.Col(Gold);
+            for (int s = -1; s <= 1; s += 2)
+            {
+                c.Push(Mul(T(0, 0.285, s * 0.05), M4.RotX(s * 0.6)));
+                c.Ellipsoid(0, 0, 0, 0.032, 0.042, 0.058, 10, 5);
+                c.Pop();
+                c.Push(Mul(T(s * 0.05, 0.285, 0), M4.RotZ(-s * 0.6)));
+                c.Ellipsoid(0, 0, 0, 0.058, 0.042, 0.032, 10, 5);
+                c.Pop();
+                // ribbon tails curling down over the lid
+                Tube(c, new[] { P(0, 0.27, 0), P(s * 0.05, 0.264, s * 0.06), P(s * 0.09, 0.263, s * 0.1), P(s * 0.12, 0.25, s * 0.125) }, 0.009, 4);
+            }
+            c.Col(GoldDark); c.Sphere(0, 0.28, 0, 0.026, 8, 4);
+            c.Col(C(255, 250, 220)); c.Sphere(0.01, 0.298, -0.01, 0.008, 5, 3);   // shine on the knot
         }
 
         /// <summary>Wooden bench along z with the backrest at -x and metal legs.</summary>
@@ -740,14 +854,23 @@ namespace LazyTurtle
         static void Coin(Model m)
         {
             var c = m.Plain;
-            c.Col(C(255, 200, 40));
+            c.Col(C(255, 205, 30));
             c.Push(Mul(T(0, 0.14, 0), M4.RotZ(-PI / 2)));
             c.Cylinder(0, -0.015, 0, 0.123, 0.123, 0.015, 24);
             c.Pop();
-            c.Col(C(230, 165, 25)); c.Torus(0, 0.14, 0, 0.123, 0.016, 24, 6);
-            c.Col(C(255, 235, 120));
-            StarX(c, 0.14, 0, 0.085, 0.035, 0.012, 0.022);
-            StarX(c, 0.14, 0, 0.085, 0.035, -0.022, -0.012);
+            c.Col(C(240, 160, 10)); c.Torus(0, 0.14, 0, 0.123, 0.016, 24, 6);
+            c.Col(C(255, 225, 90)); c.Torus(0, 0.14, 0, 0.1, 0.006, 24, 4);   // inner raised ring
+            c.Col(C(255, 245, 160));
+            StarX(c, 0.14, 0, 0.075, 0.031, 0.012, 0.022);
+            StarX(c, 0.14, 0, 0.075, 0.031, -0.022, -0.012);
+            // white glints on both faces
+            c.Col(White);
+            for (int s = -1; s <= 1; s += 2)
+            {
+                c.Push(Mul(T(s * 0.017, 0.2, -0.05), M4.RotX(0.8)));
+                c.Ellipsoid(0, 0, 0, 0.004, 0.022, 0.008, 6, 3);
+                c.Pop();
+            }
         }
 
         // ================================================================== garden and playground
@@ -1019,7 +1142,7 @@ namespace LazyTurtle
 
         // ================================================================== textures
 
-        static Tex shellTex, woodTex, leafTex, barkTex, birchTex, stoneTex, ballTex, globeTex, robeTex, netTex, fanTex, pitchTex, castleTex;
+        static Tex shellTex, giftTex, woodTex, leafTex, barkTex, birchTex, stoneTex, ballTex, globeTex, robeTex, netTex, fanTex, pitchTex, castleTex;
         static readonly Tex[] signTex = new Tex[2];
 
         static Color CA(int a, int r, int g, int b) => Color.FromArgb(Math.Max(0, Math.Min(255, a)), C(r, g, b));
@@ -1120,27 +1243,46 @@ namespace LazyTurtle
             if (vv < b1)
             {
                 dist = (b1 - vv) * H;
-                plate = C(135, 185, 70);
+                plate = C(160, 220, 60);
             }
             else if (vv < 0.32)
             {
                 double f = u * 6 - Math.Floor(u * 6);
                 int k = (int)Math.Round(u * 6) % 6;
                 dist = Math.Min(Math.Min((vv - b1) * H, (0.32 - vv) * H), Math.Abs(f - 0.5) / 6 * W * cl);
-                plate = k % 2 == 0 ? C(120, 172, 62) : C(110, 162, 56);
+                plate = k % 2 == 0 ? C(110, 200, 70) : C(70, 180, 95);
             }
             else
             {
                 double f = u * 12 - Math.Floor(u * 12);
                 int k = (int)Math.Floor(u * 12);
                 dist = Math.Min((vv - 0.32) * H, Math.Min(f, 1 - f) / 12 * W * cl);
-                plate = k % 2 == 0 ? C(100, 150, 50) : C(92, 140, 46);
+                plate = k % 2 == 0 ? C(60, 170, 75) : C(85, 185, 60);
             }
-            if (dist < 2.2) return C(45, 85, 32);
+            if (dist < 2.2) return C(40, 95, 35);
             if (dist < 5.5) return RimGold;
-            var col = Lerp(Shade(plate, -30), Shade(plate, 18), dist / 28);
-            if (dist > 9 && (dist % 11) < 1.1) col = Shade(col, -14);   // growth rings
+            var col = Lerp(Shade(plate, -26), Shade(plate, 30), dist / 26);
+            if (dist > 9 && (dist % 11) < 1.1) col = Shade(col, -16);   // growth rings
+            col = Lerp(col, C(255, 255, 200), Math.Max(0, Math.Min(1, (dist - 12) / 14)) * 0.22);   // soft shine in the middle of each plate
             return col;
+        }));
+
+        /// <summary>Gift wrapping paper: bright red-pink with white and yellow polka dots (one face per tile).</summary>
+        static Tex GiftTex() => giftTex ?? (giftTex = Paint(128, 128, false, g =>
+        {
+            using (var br = new LinearGradientBrush(new RectangleF(0, -1, 128, 130), C(255, 75, 110), C(225, 30, 70), 90f)) g.FillRectangle(br, 0, 0, 128, 128);
+            for (int row = 0; row < 4; row++)
+                for (int k = 0; k < 4; k++)
+                {
+                    float x = 16 + k * 32 + (row % 2) * 16, y = 16 + row * 32;
+                    bool big = (row + k) % 2 == 0;
+                    float r = big ? 7 : 4.5f;
+                    for (int ox = -128; ox <= 0; ox += 128)
+                    {
+                        FillE(g, CA(70, 120, 0, 30), x + ox - r + 1, y - r + 1.5f, r * 2, r * 2);
+                        FillE(g, big ? C(255, 255, 255) : C(255, 225, 60), x + ox - r, y - r, r * 2, r * 2);
+                    }
+                }
         }));
 
         static Tex WoodTex() => woodTex ?? (woodTex = Paint(256, 128, false, g =>
