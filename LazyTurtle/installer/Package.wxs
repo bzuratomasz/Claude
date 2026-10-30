@@ -26,8 +26,9 @@
     <Launch Condition="Installed OR NETFX4FULL"
             Message="Lazy Turtle needs the Microsoft .NET Framework 4 (4.0 - 4.8). Windows 11 already includes it. On Windows 7 please install .NET Framework 4.8 from microsoft.com and run this setup again." />
 
-    <Icon Id="AppIcon" SourceFile="$(var.IconFile)" />
-    <Property Id="ARPPRODUCTICON" Value="AppIcon" />
+    <!-- Apps & features icon. The Id ends in .ico so the cached copy in %WINDIR%\Installer is recognised as an icon. -->
+    <Icon Id="AppIcon.ico" SourceFile="$(var.IconFile)" />
+    <Property Id="ARPPRODUCTICON" Value="AppIcon.ico" />
     <Property Id="ARPCOMMENTS" Value="A school quiz adventure for kids aged 6-9 set in Szkoła Podstawowa nr 2 w Kórniku." />
     <Property Id="WIXUI_INSTALLDIR" Value="INSTALLFOLDER" />
 
@@ -45,22 +46,34 @@
     </StandardDirectory>
 
     <ComponentGroup Id="AppFiles" Directory="INSTALLFOLDER">
+      <!-- LazyTurtle.exe embeds the turtle icon (Assets\app.ico via <ApplicationIcon>), so Explorer shows it too. -->
       <Component Id="MainExe">
-        <File Id="AppExe" Source="$(var.BinDir)\LazyTurtle.exe" KeyPath="yes">
-          <Shortcut Id="StartMenuShortcut" Directory="AppMenuFolder" Name="Leniwy Żółw - Lazy Turtle"
-                    Description="Lazy Turtle game" WorkingDirectory="INSTALLFOLDER" Icon="AppIcon" Advertise="yes" />
-          <Shortcut Id="DesktopShortcut" Directory="DesktopFolder" Name="Leniwy Żółw"
-                    Description="Lazy Turtle game" WorkingDirectory="INSTALLFOLDER" Icon="AppIcon" Advertise="yes" />
-        </File>
-        <RemoveFolder Id="RemoveAppMenuFolder" Directory="AppMenuFolder" On="uninstall" />
+        <File Id="AppExe" Source="$(var.BinDir)\LazyTurtle.exe" KeyPath="yes" />
       </Component>
       <Component Id="MainExeConfig">
         <File Id="AppConfig" Source="$(var.BinDir)\LazyTurtle.exe.config" KeyPath="yes" />
       </Component>
     </ComponentGroup>
 
+    <!--
+      Plain (non-advertised) shortcuts straight to the installed LazyTurtle.exe (a directory path, not a [#file]
+      reference, so ICE69 stays quiet about the exe living in another component). With no Icon attribute
+      Windows takes the icon from the exe itself, so it shows the turtle on every Windows version and does
+      not depend on the icon copy cached in %WINDIR%\Installer. Non-advertised shortcuts need their own
+      component with an HKCU registry value as key path (ICE38/ICE43).
+    -->
+    <Component Id="AppShortcuts" Directory="AppMenuFolder">
+      <Shortcut Id="StartMenuShortcut" Name="Leniwy Żółw - Lazy Turtle" Description="Lazy Turtle game"
+                Target="[INSTALLFOLDER]LazyTurtle.exe" WorkingDirectory="INSTALLFOLDER" />
+      <Shortcut Id="DesktopShortcut" Directory="DesktopFolder" Name="Leniwy Żółw" Description="Lazy Turtle game"
+                Target="[INSTALLFOLDER]LazyTurtle.exe" WorkingDirectory="INSTALLFOLDER" />
+      <RemoveFolder Id="RemoveAppMenuFolder" On="uninstall" />
+      <RegistryValue Root="HKCU" Key="Software\LazyTurtle" Name="Shortcuts" Type="integer" Value="1" KeyPath="yes" />
+    </Component>
+
     <Feature Id="Main" Title="Lazy Turtle" Level="1">
       <ComponentGroupRef Id="AppFiles" />
+      <ComponentRef Id="AppShortcuts" />
     </Feature>
   </Package>
 </Wix>
