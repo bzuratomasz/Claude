@@ -129,8 +129,8 @@ namespace LazyTurtle
         public static string RiddleRight => L.Pl ? "Brawo! Dostajesz 3 monety!" : "Well done! You get 3 coins!";
 
         public static string RiddleWrong(string answer) => L.Pl
-            ? "Prawie! Prawidłowa odpowiedź to: " + answer + "."
-            : "Almost! The right answer is: " + answer + ".";
+            ? "Prawie! Prawidłowa odpowiedź to: " + answer + ". Następna zagadka będzie twoja!"
+            : "Almost! The right answer is: " + answer + ". The next riddle is yours!";
 
         public static string MatchWon => L.Pl ? "Wygraliśmy! Super gra! Dostajesz 10 monet!" : "We won! Great game! You get 10 coins!";
         public static string MatchLost => L.Pl ? "Tym razem przegraliśmy, ale było fajnie! Masz 3 monety na pocieszenie." : "We lost this time, but it was fun! Here are 3 coins anyway.";

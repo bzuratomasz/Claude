@@ -7,6 +7,9 @@ namespace LazyTurtle
     {
         public static bool Pl = true;
 
+        /// <summary>Number of "cheerN" and "oopsN" texts.</summary>
+        public const int Cheers = 6, Comforts = 5;
+
         static readonly Dictionary<string, string[]> texts = new Dictionary<string, string[]>
         {
             { "title", new[] { "Leniwy Żółw", "Lazy Turtle" } },
@@ -43,13 +46,13 @@ namespace LazyTurtle
             { "stairs_open", new[] { "Schody są otwarte! Wejdź na nie.", "The stairs are open! Walk onto them." } },
             { "greet", new[] { "Dzień dobry! Mam dla ciebie pytanie:", "Hello! I have a question for you:" } },
             { "correct", new[] { "Brawo! To dobra odpowiedź!", "Well done! That's right!" } },
-            { "wrong", new[] { "Oj, to nie to. Dobra odpowiedź to: {0}. Spróbujmy innego pytania!", "Oops, not quite. The right answer is: {0}. Let's try another question!" } },
+            { "wrong", new[] { "Prawie! Dobra odpowiedź to: {0}. Spróbujmy innego pytania - na pewno ci się uda!", "Almost! The right answer is: {0}. Let's try another question - you can do it!" } },
             { "reward", new[] { "Dostajesz prezent: {0}!", "You get a gift: {0}!" } },
             { "already", new[] { "Dziękuję! Masz już mój prezent. Odwiedź inne klasy!", "Thank you! You already have my gift. Visit the other classrooms!" } },
             { "master_greet", new[] { "Witaj, mały żółwiku! Jestem Mistrz Żółw. Odpowiedz na moje trudne pytanie:", "Welcome, little turtle! I am Master Turtle. Answer my difficult question:" } },
             { "master_correct", new[] { "Wspaniale! Jesteś bardzo mądry! Schody na następne piętro są otwarte!", "Wonderful! You are very wise! The stairs to the next floor are open!" } },
             { "master_last", new[] { "Wspaniale! Schody prowadzą na dyplom - ukończyłeś szkołę!", "Wonderful! The stairs lead to your diploma - you finished the school!" } },
-            { "master_wrong", new[] { "Hmm, to nie ta odpowiedź. Dobra to: {0}. Posłuchaj kolejnego pytania!", "Hmm, that's not it. The right one is: {0}. Listen to the next question!" } },
+            { "master_wrong", new[] { "Hmm, prawie! Dobra odpowiedź to: {0}. Posłuchaj kolejnego pytania!", "Hmm, nearly! The right one is: {0}. Listen to the next question!" } },
             { "master_already", new[] { "Schody są już otwarte. Idź dalej!", "The stairs are already open. Off you go!" } },
             { "master", new[] { "Mistrz Żółw", "Master Turtle" } },
             { "yard", new[] { "Boisko", "Playground" } },
@@ -74,6 +77,25 @@ namespace LazyTurtle
             { "locked", new[] { "Zamknięte", "Locked" } },
             { "back", new[] { "Esc - powrót", "Esc - back" } },
             { "select_hint", new[] { "Strzałki - wybierz     Enter - graj", "Arrows - choose     Enter - play" } },
+            // celebration words (Cheers) and gentle words after a wrong answer (Comforts)
+            { "cheer0", new[] { "Super!", "Super!" } },
+            { "cheer1", new[] { "Brawo!", "Great job!" } },
+            { "cheer2", new[] { "Świetnie!", "Awesome!" } },
+            { "cheer3", new[] { "Ekstra!", "Fantastic!" } },
+            { "cheer4", new[] { "Wspaniale!", "Well done!" } },
+            { "cheer5", new[] { "Rewelacja!", "Brilliant!" } },
+            { "oops0", new[] { "Prawie!", "Almost!" } },
+            { "oops1", new[] { "Nic nie szkodzi!", "No worries!" } },
+            { "oops2", new[] { "Dasz radę!", "You can do it!" } },
+            { "oops3", new[] { "Próbuj dalej!", "Keep trying!" } },
+            { "oops4", new[] { "Następne się uda!", "You'll get the next one!" } },
+            { "cheer_all", new[] { "Wszystkie prezenty!", "All the gifts!" } },
+            { "cheer_master", new[] { "Jesteś mistrzem!", "You're a champion!" } },
+            { "cheer_win", new[] { "Zwycięstwo!", "We won!" } },
+            { "cheer_floor", new[] { "Jesteś super!", "You're a star!" } },
+            { "talk_btn", new[] { "porozmawiaj", "talk" } },
+            { "talk_to_btn", new[] { "porozmawiaj: {0}", "talk to {0}" } },
+            { "stars", new[] { "Gwiazdki", "Stars" } },
             { "g0", new[] { "Miś", "Teddy bear" } },
             { "g1", new[] { "Piłka", "Beach ball" } },
             { "g2", new[] { "Książka", "Book" } },

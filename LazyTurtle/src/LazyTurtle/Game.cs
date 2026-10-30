@@ -76,6 +76,12 @@ namespace LazyTurtle
         public Football Match;           // the yard's ball game (always there in the yard; Active during a match)
         public Entity NearKid;
         public int LanguageVersion;      // bumped when the language changes (the 3D renderer rebuilds text textures)
+        // celebration drawn by the HUD: a popping word ("Super!") with confetti, or a gentle
+        // encouraging word after a wrong answer (no confetti); Cheer == null = confetti only
+        public string Cheer;
+        public double CheerTime = 99;
+        public bool CheerHappy;
+        public int CheerSeed;
         World schoolWorld;               // the floor we came from, kept while playing outside
         double camWant = CamDistance, moveVx, moveVy;
         Entity playerSprite;
@@ -212,6 +218,18 @@ namespace LazyTurtle
             Popups.Add(new Popup { Text = text, Color = color, X = 0.5f + (float)(rnd.NextDouble() - 0.5) * 0.1f });
         }
 
+        /// <summary>Confetti and a popping word; happy = false is a calm, encouraging word without confetti.</summary>
+        void Celebrate(string text, bool happy = true)
+        {
+            Cheer = text;
+            CheerHappy = happy;
+            CheerTime = 0;
+            CheerSeed = rnd.Next(1000);
+        }
+
+        string RandomCheer() => L.T("cheer" + rnd.Next(L.Cheers));
+        string RandomComfort() => L.T("oops" + rnd.Next(L.Comforts));
+
         void ToggleLanguage()
         {
             L.Pl = !L.Pl;
@@ -278,6 +296,7 @@ namespace LazyTurtle
             Time += dt;
             StateTime += dt;
             if (MessageTime > 0) MessageTime -= dt;
+            CheerTime += dt;
             foreach (var p in Popups) p.Time += dt;
             Popups.RemoveAll(p => p.Time > 1.5);
 
@@ -449,6 +468,7 @@ namespace LazyTurtle
                 case FootballEvent.GoalUs:
                     Snd.Play("win");
                     AddPopup(L.Pl ? "GOL!" : "GOAL!", Color.FromArgb(255, 235, 80));
+                    Celebrate(null);
                     break;
                 case FootballEvent.GoalThem:
                     Snd.Play("wrong");
@@ -460,6 +480,7 @@ namespace LazyTurtle
                     Snd.Play(coins == 10 ? "gift" : "coin");
                     ShowMessage(Match.ScoreUs > Match.ScoreThem ? Chat.MatchWon : Match.ScoreUs == Match.ScoreThem ? Chat.MatchDraw : Chat.MatchLost, 6);
                     AddPopup(L.F("coins_plus", coins), Color.FromArgb(255, 230, 90));
+                    if (coins == 10) Celebrate(L.T("cheer_win"));
                     break;
             }
         }
@@ -767,7 +788,11 @@ namespace LazyTurtle
             {
                 case Phase.Correct:
                     if (d.IsMaster || d.Kid != null) CloseDialog();
-                    else SetLine(d, Phase.Reward, L.F("reward", L.T("g" + d.Gift)));
+                    else
+                    {
+                        SetLine(d, Phase.Reward, L.F("reward", L.T("g" + d.Gift)));
+                        Celebrate(null);
+                    }
                     break;
                 case Phase.Wrong:
                     if (d.Kid != null) CloseDialog();
@@ -816,11 +841,13 @@ namespace LazyTurtle
                     Snd.Play("correct");
                     AddPopup(L.F("coins_plus", 3), Color.FromArgb(255, 230, 90));
                     SetLine(d, Phase.Correct, Chat.RiddleRight);
+                    Celebrate(RandomCheer());
                 }
                 else
                 {
                     Snd.Play("wrong");
                     SetLine(d, Phase.Wrong, Chat.RiddleWrong(d.Q.CorrectText));
+                    Celebrate(RandomComfort(), false);
                 }
                 return;
             }
@@ -829,6 +856,7 @@ namespace LazyTurtle
                 Mistakes++;
                 Snd.Play("wrong");
                 SetLine(d, Phase.Wrong, L.F(d.IsMaster ? "master_wrong" : "wrong", d.Q.CorrectText));
+                Celebrate(RandomComfort(), false);
                 return;
             }
 
@@ -842,6 +870,7 @@ namespace LazyTurtle
                 World.MasterMarker.Frames = Art.MarkerDone;
                 Snd.Play("stairs");
                 SetLine(d, Phase.Correct, L.T(FloorIndex == School.Floors - 1 ? "master_last" : "master_correct"));
+                Celebrate(L.T("cheer_master"));
                 return;
             }
 
@@ -856,10 +885,12 @@ namespace LazyTurtle
             Sparkles(room.Gift.X, room.Gift.Y, 0.6, 12);
             Snd.Play("gift");
             SetLine(d, Phase.Correct, L.T("correct"));
+            Celebrate(RandomCheer());
             if (World.GiftsDone == School.Classes && !World.MasterDoorOpen)
             {
                 World.OpenMasterDoor();
                 ShowMessage(L.T("master_open"), 6);
+                Celebrate(L.T("cheer_all"));
             }
         }
 
