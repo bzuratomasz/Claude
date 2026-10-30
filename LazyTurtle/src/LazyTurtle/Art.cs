@@ -268,26 +268,57 @@ namespace LazyTurtle
 
         public const int TW = 128, TH = 192;
 
-        /// <summary>Painted school wall: colored plaster, chair rail, wooden wainscot and skirting.</summary>
+        /// <summary>Crayon colors for bunting, friezes and other cheerful school details.</summary>
+        static readonly Color[] Crayons = { C(240, 75, 70), C(255, 160, 40), C(255, 215, 50), C(90, 195, 90), C(60, 150, 235), C(160, 100, 220) };
+        const string BuntingChars = "ABCDEFGHIJKLMNOPRSTUWZ123456789";
+
+        /// <summary>Painted school wall: colored plaster, alphabet bunting, a dotted frieze, chair rail, wooden wainscot and skirting.</summary>
         static void WallBase(Graphics g, FloorTheme th, int width, int seed)
         {
             var r = new Random(seed);
-            Grad(g, new RectangleF(0, 0, width, 124), Shade(th.Paint, 10), Shade(th.Paint, -12), 90f, false);
+            Grad(g, new RectangleF(0, 0, width, 124), Shade(th.Paint, 14), Shade(th.Paint, -8), 90f, false);
             for (int i = 0; i < width * 3; i++)
             {
-                int d = r.Next(-14, 15);
-                using (var b = B(CA(70, Shade(th.Paint, d)))) g.FillRectangle(b, F(r) * width, F(r) * 122, 2, 2);
+                int d = r.Next(-12, 13);
+                using (var b = B(CA(60, Shade(th.Paint, d)))) g.FillRectangle(b, F(r) * width, F(r) * 122, 2, 2);
             }
-            // a soft painted stripe in the accent color
-            using (var b = B(CA(170, th.Accent))) g.FillRectangle(b, 0, 104, width, 8);
+            // alphabet bunting under the ceiling: one swag per wall cell (period 128, so the walls tile)
+            for (int x0 = 0; x0 < width; x0 += TW)
+            {
+                using (var pen = P(C(120, 95, 70), 1.2f)) g.DrawBezier(pen, x0, 3, x0 + 40, 13, x0 + 88, 13, x0 + TW, 3);
+                for (int i = 0; i < 4; i++)
+                {
+                    float fx = x0 + 16 + i * 32, t = (fx - x0) / TW;
+                    float fy = 3 + 30 * t * (1 - t);                    // follows the sagging string
+                    int k = (seed * 3 + x0 / TW * 4 + i) % BuntingChars.Length;
+                    var col = Crayons[(seed + x0 / TW * 4 + i) % Crayons.Length];
+                    var flag = new[] { new PointF(fx - 12, fy - 1), new PointF(fx + 12, fy - 1), new PointF(fx, fy + 20) };
+                    using (var b = B(CA(50, 0, 0, 0))) g.FillPolygon(b, new[] { new PointF(fx - 11, fy + 1), new PointF(fx + 13, fy + 1), new PointF(fx + 1, fy + 22) });
+                    using (var b = B(col)) g.FillPolygon(b, flag);
+                    using (var pen = P(Shade(col, -40), 1)) g.DrawPolygon(pen, flag);
+                    TextIn(g, BuntingChars[k].ToString(), new RectangleF(fx - 8, fy, 16, 12), 11, Color.White);
+                }
+            }
+            // a cheerful frieze: accent band with crayon dots (period 16, so the walls tile)
+            using (var b = B(CA(200, th.Accent))) g.FillRectangle(b, 0, 103, width, 10);
+            using (var b = B(CA(120, Color.White))) g.FillRectangle(b, 0, 103, width, 1.5f);
+            for (int x = 0; x < width; x += 16)
+                using (var b = B(Crayons[(x / 16) % Crayons.Length]))
+                {
+                    g.FillEllipse(Brushes.White, x + 4, 104.5f, 8, 7);
+                    g.FillEllipse(b, x + 5, 105.5f, 6, 5);
+                }
             // wainscot
-            Grad(g, new RectangleF(0, 124, width, 58), Shade(th.Wood, 12), Shade(th.Wood, -18), 90f, false);
+            Grad(g, new RectangleF(0, 124, width, 58), Shade(th.Wood, 18), Shade(th.Wood, -12), 90f, false);
             for (int x = 0; x < width; x += 32)
             {
                 var panel = new RectangleF(x + 4, 132, 24, 42);
-                Grad(g, panel, Shade(th.Wood, -14), Shade(th.Wood, 14), 90f, false);
-                using (var pen = P(Shade(th.Wood, -40), 1.2f)) g.DrawRectangle(pen, panel.X, panel.Y, panel.Width, panel.Height);
-                using (var pen = P(Shade(th.Wood, -35), 1)) g.DrawLine(pen, x, 124, x, 182);
+                Grad(g, panel, Shade(th.Wood, -8), Shade(th.Wood, 18), 90f, false);
+                using (var pen = P(Shade(th.Wood, -36), 1.2f)) g.DrawRectangle(pen, panel.X, panel.Y, panel.Width, panel.Height);
+                using (var pen = P(Shade(th.Wood, -32), 1)) g.DrawLine(pen, x, 124, x, 182);
+                // a little painted star on every panel
+                using (var b = B(CA(190, Crayons[(x / 32 + seed) % Crayons.Length])))
+                    g.FillPolygon(b, StarPoints(panel.X + 12, panel.Y + 21, 6.5f, 2.8f));
             }
             Grad(g, new RectangleF(0, 118, width, 8), Shade(th.Wood, 40), Shade(th.Wood, -10), 90f, false);
             Grad(g, new RectangleF(0, 182, width, 10), Shade(th.Wood, -45), Shade(th.Wood, -70), 90f, false);
@@ -404,8 +435,32 @@ namespace LazyTurtle
                     g.TranslateTransform(board.X + 20 + (i % 3) * 36, board.Y + 22 + (i / 3) * 44);
                     g.RotateTransform((F(r) - 0.5f) * 14);
                     g.FillRectangle(B(papers[i % papers.Length]), -14, -16, 28, 32);
-                    using (var pen = P(C(140, 140, 160), 1))
-                        for (int l = 0; l < 4; l++) g.DrawLine(pen, -10, -8 + l * 6, 10, -8 + l * 6);
+                    if (i == 1)
+                    {
+                        // a child's crayon drawing: sun, grass and a flower
+                        g.FillEllipse(B(C(255, 200, 40)), 2, -12, 10, 10);
+                        using (var pen = P(C(255, 170, 30), 1))
+                            for (int k = 0; k < 8; k++)
+                            {
+                                double a = k * Math.PI / 4;
+                                g.DrawLine(pen, 7 + (float)Math.Cos(a) * 6.5f, -7 + (float)Math.Sin(a) * 6.5f, 7 + (float)Math.Cos(a) * 9, -7 + (float)Math.Sin(a) * 9);
+                            }
+                        g.FillRectangle(B(C(90, 190, 80)), -14, 10, 28, 6);
+                        using (var pen = P(C(60, 150, 60), 1.5f)) g.DrawLine(pen, -6, 11, -6, 0);
+                        g.FillEllipse(B(C(240, 80, 120)), -10, -5, 8, 8);
+                        g.FillEllipse(B(C(255, 230, 80)), -8, -3, 4, 4);
+                    }
+                    else if (i == 5)
+                    {
+                        // a child's crayon drawing: a house with a red roof
+                        g.FillRectangle(B(C(255, 220, 120)), -9, -2, 18, 14);
+                        g.FillPolygon(B(C(230, 70, 60)), new[] { new PointF(-12, -2), new PointF(0, -13), new PointF(12, -2) });
+                        g.FillRectangle(B(C(70, 140, 230)), -6, 2, 5, 5);
+                        g.FillRectangle(B(C(150, 90, 50)), 2, 4, 5, 8);
+                    }
+                    else
+                        using (var pen = P(C(140, 140, 160), 1))
+                            for (int l = 0; l < 4; l++) g.DrawLine(pen, -10, -8 + l * 6, 10, -8 + l * 6);
                     g.FillEllipse(B(new[] { C(230, 50, 50), C(50, 120, 230), C(60, 180, 60) }[i % 3]), -3, -19, 6, 6);
                     g.Restore(st);
                 }
@@ -667,7 +722,7 @@ namespace LazyTurtle
 
         static void RoyalBase(Graphics g, int width)
         {
-            g.FillRectangle(B(C(95, 40, 115)), 0, 0, width, 124);
+            g.FillRectangle(B(C(125, 62, 150)), 0, 0, width, 124);
             using (var pen = P(CA(160, 230, 190, 90), 1.5f))
                 for (int x = 0; x < width; x += 32)
                     for (int y = 0; y < 124; y += 32)
@@ -894,24 +949,38 @@ namespace LazyTurtle
         {
             return Opaque(128, 128, g =>
             {
-                var r = new Random(7);
-                for (int y = 0; y < 4; y++)
-                    for (int x = 0; x < 4; x++)
-                    {
-                        var c = (x + y) % 2 == 0 ? th.Floor1 : th.Floor2;
-                        var rect = new RectangleF(x * 32, y * 32, 32, 32);
-                        Grad(g, rect, Shade(c, 8), Shade(c, -8), 45f, false);
-                        for (int i = 0; i < 12; i++)
-                            using (var b = B(CA(40, Shade(c, r.Next(-30, 30))))) g.FillEllipse(b, rect.X + F(r) * 28, rect.Y + F(r) * 28, 4, 3);
-                    }
-                using (var pen = P(CA(90, 0, 0, 0), 1))
-                    for (int i = 0; i <= 128; i += 32)
-                    {
-                        g.DrawLine(pen, i, 0, i, 128);
-                        g.DrawLine(pen, 0, i, 128, i);
-                    }
+                CheckerBase(g, th);
                 g.FillEllipse(B(CA(50, 255, 255, 255)), 20, 10, 50, 20);
             });
+        }
+
+        /// <summary>Clean, shiny checkered tiles in the floor's two colors with a little sparkle on every colored tile (also under the corridor runner).</summary>
+        static void CheckerBase(Graphics g, FloorTheme th)
+        {
+            var r = new Random(7);
+            for (int y = 0; y < 4; y++)
+                for (int x = 0; x < 4; x++)
+                {
+                    bool light = (x + y) % 2 == 0;
+                    var c = light ? th.Floor1 : th.Floor2;
+                    var rect = new RectangleF(x * 32, y * 32, 32, 32);
+                    Grad(g, rect, Shade(c, 12), Shade(c, -6), 45f, false);
+                    for (int i = 0; i < 10; i++)
+                        using (var b = B(CA(30, Shade(c, r.Next(-30, 30))))) g.FillEllipse(b, rect.X + F(r) * 28, rect.Y + F(r) * 28, 4, 3);
+                    // glossy corner highlight
+                    using (var b = B(CA(55, 255, 255, 255))) g.FillEllipse(b, rect.X + 3, rect.Y + 3, 14, 6);
+                    if (!light)
+                        using (var b = B(CA(150, 255, 255, 255)))
+                            g.FillPolygon(b, new[] { new PointF(rect.X + 16, rect.Y + 10), new PointF(rect.X + 18, rect.Y + 14), new PointF(rect.X + 22, rect.Y + 16),
+                                new PointF(rect.X + 18, rect.Y + 18), new PointF(rect.X + 16, rect.Y + 22), new PointF(rect.X + 14, rect.Y + 18),
+                                new PointF(rect.X + 10, rect.Y + 16), new PointF(rect.X + 14, rect.Y + 14) });
+                }
+            using (var pen = P(CA(60, 0, 0, 0), 1))
+                for (int i = 0; i <= 128; i += 32)
+                {
+                    g.DrawLine(pen, i, 0, i, 128);
+                    g.DrawLine(pen, 0, i, 128, i);
+                }
         }
 
         public static Tex Parquet()
@@ -924,7 +993,7 @@ namespace LazyTurtle
                     {
                         float x = col * 40 + (row % 2) * 20, y = row * 16;
                         int d = r.Next(-18, 18);
-                        var c = C(185 + d, 130 + d, 80 + d / 2);
+                        var c = C(205 + d, 148 + d, 88 + d / 2);
                         var rect = new RectangleF(x, y, 40, 16);
                         Grad(g, rect, Shade(c, 12), Shade(c, -14), 90f, false);
                         using (var pen = P(CA(90, 120, 70, 30), 1))
@@ -942,18 +1011,27 @@ namespace LazyTurtle
                 for (int y = 0; y < 2; y++)
                     for (int x = 0; x < 2; x++)
                     {
-                        var c = (x + y) % 2 == 0 ? C(235, 230, 222) : C(205, 200, 195);
+                        var c = (x + y) % 2 == 0 ? C(244, 234, 214) : C(238, 208, 184);
                         var rect = new RectangleF(x * 64, y * 64, 64, 64);
                         Grad(g, rect, Shade(c, 10), Shade(c, -10), 30f, false);
-                        using (var pen = P(CA(80, 120, 110, 110), 1))
+                        using (var pen = P(CA(55, 170, 140, 120), 1))
                             for (int v = 0; v < 3; v++)
                                 g.DrawBezier(pen, rect.X + F(r) * 64, rect.Y, rect.X + F(r) * 64, rect.Y + 20, rect.X + F(r) * 64, rect.Y + 44, rect.X + F(r) * 64, rect.Bottom);
                     }
-                using (var pen = P(CA(120, 90, 85, 80), 1.5f))
+                using (var pen = P(CA(100, 150, 120, 100), 1.5f))
                 {
                     g.DrawLine(pen, 64, 0, 64, 128);
                     g.DrawLine(pen, 0, 64, 128, 64);
                     g.DrawRectangle(pen, 0, 0, 128, 128);
+                }
+                // small colored inlays where the slabs meet (the corner one wraps around, so the floor tiles)
+                var inlay = new[] { C(60, 150, 235), C(255, 190, 50) };
+                foreach (var p in new[] { new PointF(64, 64), new PointF(0, 0), new PointF(128, 0), new PointF(0, 128), new PointF(128, 128) })
+                {
+                    var col = p.X == 64 ? inlay[0] : inlay[1];
+                    var d = new[] { new PointF(p.X, p.Y - 7), new PointF(p.X + 7, p.Y), new PointF(p.X, p.Y + 7), new PointF(p.X - 7, p.Y) };
+                    g.FillPolygon(B(col), d);
+                    using (var pen = P(Color.White, 1.2f)) g.DrawPolygon(pen, d);
                 }
             });
         }
@@ -962,7 +1040,7 @@ namespace LazyTurtle
         {
             return Opaque(128, 128, g =>
             {
-                Grad(g, new RectangleF(0, 0, 128, 128), C(170, 35, 45), C(140, 25, 35), 45f, false);
+                Grad(g, new RectangleF(0, 0, 128, 128), C(195, 45, 55), C(160, 32, 45), 45f, false);
                 using (var pen = P(C(235, 190, 80), 3))
                 {
                     g.DrawPolygon(pen, new[] { new PointF(64, 18), new PointF(110, 64), new PointF(64, 110), new PointF(18, 64) });
@@ -979,10 +1057,10 @@ namespace LazyTurtle
         {
             return Opaque(128, 128, g =>
             {
-                g.FillRectangle(B(C(232, 230, 222)), 0, 0, 128, 128);
+                g.FillRectangle(B(C(248, 244, 232)), 0, 0, 128, 128);
                 var r = new Random(10);
-                for (int i = 0; i < 260; i++) g.FillRectangle(B(C(205, 202, 195)), F(r) * 128, F(r) * 128, 1.5f, 1.5f);
-                using (var pen = P(C(185, 182, 175), 2))
+                for (int i = 0; i < 260; i++) g.FillRectangle(B(C(228, 222, 208)), F(r) * 128, F(r) * 128, 1.5f, 1.5f);
+                using (var pen = P(C(210, 202, 185), 2))
                 {
                     g.DrawRectangle(pen, 0, 0, 128, 128);
                     g.DrawLine(pen, 64, 0, 64, 128);

@@ -20,15 +20,15 @@ namespace LazyTurtle
         const double FovY = 62 * Math.PI / 180, Near = 0.05, Far = 400;
         const float SkyRadius = 150;
         const float LampRadius = 6, LampIntensity = 0.5f;
-        const float IndoorFogStart = 10, IndoorFogEnd = 38, OutdoorFogStart = 40, OutdoorFogEnd = 140;
-        const float IndoorDrawDist = 45, OutdoorDrawDist = 160;
+        const float IndoorFogStart = 14, IndoorFogEnd = 52, OutdoorFogStart = 50, OutdoorFogEnd = 150;   // gentle haze, not gloom
+        const float IndoorDrawDist = 56, OutdoorDrawDist = 160;     // beyond the fog end, so nothing pops in
 
         static readonly V3 Up = new V3(0, 1, 0);
         static readonly V3 SunDir = new V3(-0.45, 0.8, 0.35).Normalized();
         static readonly V3 SunCol = new V3(1.0, 0.95, 0.85);
-        static readonly V3 SkyAmb = new V3(0.55, 0.60, 0.70);
-        static readonly V3 IndoorAmb = new V3(0.42, 0.40, 0.37);
-        static readonly V3 LampCol = new V3(1.0, 0.96, 0.88);
+        static readonly V3 SkyAmb = new V3(0.60, 0.63, 0.70);
+        static readonly V3 IndoorAmb = new V3(0.50, 0.47, 0.42);    // bright, warm classroom fill light
+        static readonly V3 LampCol = new V3(1.0, 0.95, 0.84);
         static readonly V3 LampTileCol = new V3(1.3, 1.27, 1.2);
         static readonly Tex PlainTex = MakePlain();   // stands in for a missing texture
 

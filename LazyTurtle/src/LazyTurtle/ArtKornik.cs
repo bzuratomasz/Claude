@@ -971,28 +971,13 @@ namespace LazyTurtle
             {
                 g.PixelOffsetMode = PixelOffsetMode.Half;   // full-width shapes cover the edge pixels exactly (seamless tiling)
                 // checker floor exactly like Checker()
-                var r = new Random(7);
-                for (int y = 0; y < 4; y++)
-                    for (int x = 0; x < 4; x++)
-                    {
-                        var c = (x + y) % 2 == 0 ? th.Floor1 : th.Floor2;
-                        var rect = new RectangleF(x * 32, y * 32, 32, 32);
-                        Grad(g, rect, Shade(c, 8), Shade(c, -8), 45f, false);
-                        for (int i = 0; i < 12; i++)
-                            using (var b = B(CA(40, Shade(c, r.Next(-30, 30))))) g.FillEllipse(b, rect.X + F(r) * 28, rect.Y + F(r) * 28, 4, 3);
-                    }
-                using (var pen = P(CA(90, 0, 0, 0), 1))
-                    for (int i = 0; i <= 128; i += 32)
-                    {
-                        g.DrawLine(pen, i, 0, i, 128);
-                        g.DrawLine(pen, 0, i, 128, i);
-                    }
+                CheckerBase(g, th);
                 // the carpet strip (y 19..109)
                 float top = 19, bot = 109;
                 g.FillRectangle(B(CA(70, 0, 0, 0)), 0, bot, 128, 3);
-                Grad(g, new RectangleF(0, top, 128, bot - top), Shade(th.Accent, -10), Shade(th.Accent, -45), 90f, false);
-                g.FillRectangle(B(Shade(th.Accent, -55)), 0, top, 128, 7);
-                g.FillRectangle(B(Shade(th.Accent, -55)), 0, bot - 7, 128, 7);
+                Grad(g, new RectangleF(0, top, 128, bot - top), Shade(th.Accent, 8), Shade(th.Accent, -28), 90f, false);
+                g.FillRectangle(B(Shade(th.Accent, -42)), 0, top, 128, 7);
+                g.FillRectangle(B(Shade(th.Accent, -42)), 0, bot - 7, 128, 7);
                 using (var gold = B(C(235, 195, 80)))
                 {
                     g.FillRectangle(gold, 0, top + 7, 128, 3);
