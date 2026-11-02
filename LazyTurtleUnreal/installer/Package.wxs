@@ -1,0 +1,69 @@
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"
+     xmlns:ui="http://wixtoolset.org/schemas/v4/wxs/ui">
+
+  <!--
+    64-bit per-machine MSI with the packaged Unreal game (Windows 10 / 11 x64). Every file of the packaged
+    build is harvested with the WiX 5 Files element; the Unreal prerequisites (Visual C++ runtime) are
+    installed by the Setup.exe bundle (Bundle.wxs) before this MSI.
+  -->
+  <Package Name="Lazy Turtle"
+           Manufacturer="LazyTurtle"
+           Version="$(var.Version)"
+           UpgradeCode="{9F2353AF-CA76-4EB2-91E6-1EE6D61BDC4A}"
+           Scope="perMachine"
+           InstallerVersion="500"
+           Codepage="1250"
+           Compressed="yes">
+
+    <!-- Code page 1250 (Central European) so the Polish name "Leniwy Żółw" fits in the MSI tables. -->
+    <SummaryInformation Codepage="1250" Description="Leniwy Żółw - szkolna przygoda w SP 2 w Kórniku / Lazy Turtle school quiz adventure" />
+    <MajorUpgrade DowngradeErrorMessage="A newer version of [ProductName] is already installed." />
+    <!-- Split into 1 GB cabinets: a single cabinet cannot exceed 2 GB. -->
+    <MediaTemplate EmbedCab="yes" MaximumUncompressedMediaSize="1024" CompressionLevel="high" />
+
+    <Launch Condition="Installed OR VersionNT64"
+            Message="Lazy Turtle needs 64-bit Windows 10 or 11 and a DirectX 12 graphics card." />
+
+    <Icon Id="AppIcon" SourceFile="$(var.IconFile)" />
+    <Property Id="ARPPRODUCTICON" Value="AppIcon" />
+    <Property Id="ARPCOMMENTS" Value="A school quiz adventure for kids aged 8-11 set in Szkoła Podstawowa nr 2 w Kórniku." />
+    <Property Id="WIXUI_INSTALLDIR" Value="INSTALLFOLDER" />
+
+    <WixVariable Id="WixUILicenseRtf" Value="$(var.LicenseFile)" />
+    <ui:WixUI Id="WixUI_InstallDir" />
+
+    <StandardDirectory Id="ProgramFiles64Folder">
+      <Directory Id="INSTALLFOLDER" Name="Lazy Turtle" />
+    </StandardDirectory>
+
+    <StandardDirectory Id="DesktopFolder" />
+
+    <StandardDirectory Id="ProgramMenuFolder">
+      <Directory Id="AppMenuFolder" Name="Lazy Turtle" />
+    </StandardDirectory>
+
+    <!-- The whole packaged game (LazyTurtle.exe, Engine\, LazyTurtle\ with the .pak/.utoc files). -->
+    <ComponentGroup Id="GameFiles" Directory="INSTALLFOLDER">
+      <Files Include="$(var.StageDir)\**">
+        <!-- installed by the bundle; no need to ship it twice -->
+        <Exclude Files="$(var.StageDir)\Engine\Extras\Redist\**" />
+      </Files>
+    </ComponentGroup>
+
+    <ComponentGroup Id="Shortcuts" Directory="AppMenuFolder">
+      <Component Id="AppShortcuts">
+        <Shortcut Id="StartMenuShortcut" Name="Leniwy Żółw - Lazy Turtle" Description="Lazy Turtle game"
+                  Target="[INSTALLFOLDER]LazyTurtle.exe" WorkingDirectory="INSTALLFOLDER" Icon="AppIcon" />
+        <Shortcut Id="DesktopShortcut" Directory="DesktopFolder" Name="Leniwy Żółw" Description="Lazy Turtle game"
+                  Target="[INSTALLFOLDER]LazyTurtle.exe" WorkingDirectory="INSTALLFOLDER" Icon="AppIcon" />
+        <RemoveFolder Id="RemoveAppMenuFolder" On="uninstall" />
+        <RegistryValue Root="HKLM" Key="Software\LazyTurtle" Name="Shortcuts" Type="integer" Value="1" KeyPath="yes" />
+      </Component>
+    </ComponentGroup>
+
+    <Feature Id="Main" Title="Lazy Turtle" Level="1">
+      <ComponentGroupRef Id="GameFiles" />
+      <ComponentGroupRef Id="Shortcuts" />
+    </Feature>
+  </Package>
+</Wix>
